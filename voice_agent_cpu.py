@@ -7,18 +7,18 @@ import requests
 import json
 
 # --- CONFIG ---
-DEVICE_INDEX = 11    # your USB mic (AK5371)
-DURATION = 5
+DEVICE_INDEX = 11        # your USB mic index (check with python3 -m sounddevice)
+DURATION = 5             # seconds to record
 SAMPLERATE_IN = 48000
 SAMPLERATE_OUT = 16000
 RAW_FILE = "mic_test.wav"
 PROC_FILE = "mic_16k.wav"
 
-WHISPER_MAIN = "../whisper.cpp/main"
+WHISPER_MAIN = "../whisper.cpp/main"             # path to Whisper binary
 WHISPER_MODEL = "../whisper.cpp/models/ggml-tiny.en.bin"
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
-OLLAMA_MODEL = "gemma3:1b"   # change if your Ollama model has a different name
+OLLAMA_MODEL = "gemma3:1b"                       # or another local Ollama model
 
 
 def record_audio():
@@ -35,7 +35,7 @@ def record_audio():
     sf.write(RAW_FILE, audio, SAMPLERATE_IN, subtype="PCM_16")
     print(f"✅ Saved raw recording to {RAW_FILE}")
 
-    # Resample 48k → 16k
+    # Resample 48 kHz → 16 kHz
     print("🔄 Resampling to 16kHz...")
     audio_resampled = resample_poly(audio.flatten(), up=1, down=3)
     sf.write(PROC_FILE, audio_resampled, SAMPLERATE_OUT, subtype="PCM_16")
@@ -43,39 +43,23 @@ def record_audio():
     return PROC_FILE
 
 
-def transcribe2(filepath):
-    """Run Whisper.cpp transcription"""
-    print("📝 Transcribing with Whisper.cpp...")
-    cmd = [WHISPER_MAIN, "-m", WHISPER_MODEL, "-f", filepath, "-nt"]
-    result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-    text = ""
-    for line in result.stdout.splitlines():
-        if "]" in line and "-->" in line:
-            part = line.split("]", 1)[1].strip()
-            text += " " + part
-    text = text.strip()
-    print("🗣️ You said:", text if text else "⚠️ No speech recognized.")
-    return text
-    
 def transcribe(filepath):
     """Run Whisper.cpp transcription"""
     print("📝 Transcribing with Whisper.cpp...")
     cmd = [WHISPER_MAIN, "-m", WHISPER_MODEL, "-f", filepath, "-nt"]
     result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
-    # Collect lines that aren't empty and aren't timing headers
+    # Parse Whisper output
     lines = []
     for line in result.stdout.splitlines():
         line = line.strip()
         if not line:
             continue
-        if "-->" in line:  # has timestamp
-            # take text part only
+        if "-->" in line:  # timestamped line
             if "]" in line:
                 line = line.split("]", 1)[1].strip()
             lines.append(line)
         elif not line.startswith("whisper_") and not line.startswith("system_info"):
-            # fallback: keep other text lines
             lines.append(line)
 
     text = " ".join(lines).strip()
@@ -83,12 +67,13 @@ def transcribe(filepath):
     return text
 
 
-
 def ask_ollama(prompt):
     """Send text to Ollama and stream the reply"""
-    print("🤖 Asking Ollama...")
+    print(f"🤖 Asking Ollama model: {OLLAMA_MODEL}")
     resp = requests.post(
-        OLLAMA_URL, json={"model": OLLAMA_MODEL, "prompt": prompt, "stream": True}, stream=True
+        OLLAMA_URL,
+        json={"model": OLLAMA_MODEL, "prompt": prompt, "stream": True},
+        stream=True
     )
     output = ""
     for line in resp.iter_lines():
