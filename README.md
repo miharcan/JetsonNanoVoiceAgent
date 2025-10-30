@@ -1,38 +1,30 @@
-# JetsonNanoVoiceAgent
+# 🦙 Jetson Nano Voice Assistant (LLM + Whisper)
 
 ![Jetson Nano](https://developer.nvidia.com/sites/default/files/akamai/embedded/images/jetson-nano-dev-kit-top-angle-800.jpg)
 
-**Jetson Nano LLM** explores running lightweight Large Language Models (LLMs) and speech models directly on the NVIDIA Jetson Nano — a 4GB ARM-based edge AI board with a 128-core Maxwell GPU.
+A lightweight **voice-to-LLM pipeline** running fully offline on the **NVIDIA Jetson Nano**.  
+It records audio from a USB mic, transcribes speech using **Whisper.cpp**, and replies with **Llama.cpp-nano** (GPU-accelerated).
 
 ---
 
 ## ⚙️ Overview
 
-This project tests **llama.cpp**, **whisper.cpp**, and other quantized LLMs for **offline conversational AI**, **speech-to-text**, and **edge reasoning**.  
-Focus areas include **quantization**, **CUDA acceleration**, and **resource optimization** for real-world on-device AI.
+This project demonstrates end-to-end **speech-to-AI conversation** on an edge device.  
+It’s built for experimentation with **TinyLlama**, **Phi-2**, and other small quantized LLMs optimized for low memory (4 GB).
 
-| Component | Spec |
-|------------|------|
-| GPU | 128-core Maxwell |
-| CPU | Quad-core ARM Cortex-A57 |
-| Memory | 4 GB LPDDR4 |
-| CUDA | 10.2 / 11.x |
-| OS | Ubuntu 18.04 / 20.04 (JetPack 4.x) |
-
----
-
-## ⚠️ Key Challenges
-
-- **Memory limits** → models must be 4-bit or 8-bit quantized  
-- **Low GPU compute** → use partial CUDA offload and short context sizes  
-- **Compatibility issues** → prefer llama.cpp / whisper.cpp over heavy Python stacks  
+### 🧩 Core Components
+- 🎙️ **Audio Input** – `sounddevice` + `soundfile` for 48 kHz mic recording  
+- 🔄 **Preprocessing** – resample to 16 kHz using `scipy.signal.resample_poly`  
+- 🗣️ **Speech Recognition** – [`whisper.cpp`](https://github.com/ggerganov/whisper.cpp) (Tiny English model)  
+- 🦙 **LLM Inference** – [`llama.cpp`](https://github.com/ggerganov/llama.cpp) compiled for Jetson Nano GPU  
+- 💬 **Pipeline** – Record → Transcribe → Generate LLM reply → Print to console  
 
 ---
 
-## 🚀 Tips
+## 🧱 Requirements
 
-- Use quantized models (`Q4_K_M`, `Q5_1`)  
-- Enable CUDA flags:
+- Jetson Nano (4 GB) with JetPack 4.x  
+- CUDA enabled (`export GGML_CUDA_FORCE_MMQ=1`)  
+- Python 3.8+ with:
   ```bash
-  export GGML_CUDA_FORCE_MMQ=1
-  export CUDA_USE_TENSOR_CORES=1
+  pip install sounddevice soundfile numpy scipy
