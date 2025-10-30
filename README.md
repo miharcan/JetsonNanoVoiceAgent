@@ -1,7 +1,5 @@
 # JetsonNanoVoiceAgent
 
-# 🦙 Jetson Nano LLM
-
 ![Jetson Nano](https://developer.nvidia.com/sites/default/files/akamai/embedded/images/jetson-nano-dev-kit-top-angle-800.jpg)
 
 **Jetson Nano LLM** explores running lightweight Large Language Models (LLMs) and speech models directly on the NVIDIA Jetson Nano — a 4GB ARM-based edge AI board with a 128-core Maxwell GPU.
