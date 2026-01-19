@@ -1,1 +1,16 @@
+# audio artifacts
 *.wav
+
+# python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# editor/OS
+.DS_Store
+
+# common build/model folders (avoid accidentally committing large binaries)
+models/
+build/
+dist/
